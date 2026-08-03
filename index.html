@@ -173,6 +173,7 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
     <div class="lbl">Ventas del mes</div><div class="grid" id="r-k"></div>
     <div class="lbl">Cobros</div><div class="grid" id="r-p"></div>
     <div class="lbl">Resultado</div><div class="grid" id="r-r"></div>
+    <div class="lbl">Vendido en el mes</div><div class="grid" id="r-v"></div>
     <button class="btn sec" onclick="expCSV('ventas')">Exportar ventas del mes (CSV)</button>
   </div>
 
@@ -385,6 +386,11 @@ function renderResumen(){
   $('r-k').innerHTML=kpi('Ventas',num(vs.length))+kpi('Facturado',ars(fac))+kpi('Ganancia',ars(gan),fac?'margen '+(gan/fac*100).toFixed(1)+'%':'','g')+kpi('Ticket prom.',vs.length?ars(fac/vs.length):'$0','','b');
   $('r-p').innerHTML=kpi('Efectivo',ars(efe),fac?(efe/fac*100).toFixed(0)+'%':'','b')+kpi('Transferencia',ars(tra),fac?(tra/fac*100).toFixed(0)+'%':'','g');
   $('r-r').innerHTML=kpi('Ganancia bruta',ars(gan),'','g')+kpi('Gastos',ars(gas),'','r')+kpi('Neta',ars(gan-gas),'','')+kpi('Garrafas+cil.',num(vs.reduce((a,v)=>a+v.u10+v.u15+v.u45,0)));
+  const s10=vs.reduce((a,v)=>a+v.u10,0),s15=vs.reduce((a,v)=>a+v.u15,0),s45=vs.reduce((a,v)=>a+v.u45,0);
+  const sye=vs.reduce((a,v)=>a+(v.yerba||0),0),sag=vs.reduce((a,v)=>a+(v.agua||0),0);
+  const senv=vs.filter(v=>+v.envase>0).length;
+  $('r-v').innerHTML=kpi('Garrafas 10 kg',num(s10),num(s10*10)+' kg')+kpi('Garrafas 15 kg',num(s15),num(s15*15)+' kg')+kpi('Cilindros 45 kg',num(s45),num(s45*45)+' kg','b')
+    +kpi('Envases nuevos',num(senv))+kpi('Yerba (paq.)',num(sye))+kpi('Agua (bidones)',num(sag),'','b');
 }
 function ordC(el){document.querySelectorAll('#p-clientes .seg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');cur.ord=el.dataset.o;renderClientes();}
 function renderClientes(){
