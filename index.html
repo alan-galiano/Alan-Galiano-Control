@@ -174,6 +174,9 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
     <div class="lbl">Cobros</div><div class="grid" id="r-p"></div>
     <div class="lbl">Resultado</div><div class="grid" id="r-r"></div>
     <div class="lbl">Vendido en el mes</div><div class="grid" id="r-v"></div>
+    <div class="lbl">Evolución del año</div>
+    <div class="row" style="margin-bottom:8px"><div><label>Año</label><select id="ev-anio" onchange="renderEvol()"></select></div><div></div></div>
+    <div class="card"><div style="display:flex;gap:16px;margin-bottom:10px;font-size:11px;color:var(--mut)"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--gold);vertical-align:middle;margin-right:4px"></span>Facturado</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4A4A52;vertical-align:middle;margin-right:4px"></span>Ganancia</span></div><div id="ev-chart" style="position:relative;height:200px"></div><div id="ev-tip" class="muted" style="margin-top:10px;min-height:18px;text-align:center"></div></div>
     <button class="btn sec" onclick="expCSV('ventas')">Exportar ventas del mes (CSV)</button>
   </div>
 
@@ -183,6 +186,16 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
     <div class="seg" style="margin-top:8px"><button class="on" data-o="fac" onclick="ordC(this)">Por facturado</button><button data-o="gan" onclick="ordC(this)">Por ganancia</button></div>
     <div id="c-det"></div>
     <div class="lbl">Ranking (mes)</div><div class="list" id="c-list"></div>
+  </div>
+
+  <!-- SEGUIMIENTO -->
+  <div class="pnl" id="p-seguimiento">
+    <div class="lbl">Mejores clientes</div>
+    <div class="seg" style="margin-bottom:8px"><button class="on" data-sg="histo" onclick="sgMode(this)">Histórico</button><button data-sg="mes" onclick="sgMode(this)">Este mes</button></div>
+    <div class="list" id="sg-top"></div>
+    <div class="lbl">Seguimiento · clientes que se enfriaron</div>
+    <div class="muted" style="margin:-4px 0 8px">Con 4+ compras y fuera de su ritmo habitual</div>
+    <div class="list" id="sg-caidos"></div>
   </div>
 
   <!-- PRODUCTOS -->
@@ -218,6 +231,7 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)}
   <button class="tb on" onclick="tab('cargar',this)">➕<span>Cargar</span></button>
   <button class="tb" onclick="tab('resumen',this)">📊<span>Resumen</span></button>
   <button class="tb" onclick="tab('clientes',this)">👤<span>Clientes</span></button>
+  <button class="tb" onclick="tab('seguimiento',this)">🎯<span>Seguim.</span></button>
   <button class="tb" onclick="tab('productos',this)">🔥<span>Productos</span></button>
   <button class="tb" onclick="tab('gastos',this)">💸<span>Gastos</span></button>
   <button class="tb" onclick="tab('stock',this)">📦<span>Stock</span></button>
@@ -235,7 +249,7 @@ const num=n=>Math.round(n||0).toLocaleString('es-AR');
 const today=()=>new Date().toLocaleDateString('en-CA');
 const ym=s=>s.slice(0,7);
 let D={ventas:[],gastos:[],clientes:[],costos:[],cargas:[],km:[],gasoil:[]};
-let cur={q:{'10':0,'15':0,'45':0},cq:{'10':0,'15':0,'45':0},pago:'efectivo',cpago:'efectivo',dpago:'efectivo',amb:'negocio',ord:'fac',gcat:null};
+let cur={q:{'10':0,'15':0,'45':0},cq:{'10':0,'15':0,'45':0},pago:'efectivo',cpago:'efectivo',dpago:'efectivo',amb:'negocio',ord:'fac',gcat:null,sg:'histo'};
 
 /* ---------- login ---------- */
 async function login(){
@@ -371,7 +385,36 @@ async function delItem(tab,id){
 
 /* ---------- render ---------- */
 function kpi(t,v,s,cls){return '<div class="kpi '+(cls||'')+'"><div class="t">'+t+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>'}
-function renderAll(){renderCargar();renderResumen();renderClientes();renderProd();renderGastos();renderStock();renderDia();}
+function renderAll(){renderCargar();renderResumen();renderClientes();renderProd();renderGastos();renderStock();renderDia();renderSeguimiento();}
+function sgMode(el){document.querySelectorAll('#p-seguimiento .seg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');cur.sg=el.dataset.sg;renderSeguimiento();}
+function renderSeguimiento(){
+  // ----- Mejores clientes (histórico o mes) -----
+  const base = cur.sg=='mes' ? mv() : D.ventas.filter(v=>!sucF()||v.sucursal==sucF());
+  const agg={};
+  base.forEach(v=>{const a=agg[v.cliente]=agg[v.cliente]||{fac:0,gan:0,n:0};a.fac+=+v.facturado;a.gan+=+v.ganancia;a.n++;});
+  const top=Object.entries(agg).sort((a,b)=>b[1].fac-a[1].fac).slice(0,10);
+  $('sg-top').innerHTML=top.map(([c,a],i)=>'<div class="li"><div style="width:18px;color:var(--mut2)">'+(i+1)+'</div><div class="nm">'+c+'<div class="muted">'+a.n+' compras</div></div><div class="mn">'+ars(a.fac)+'<div class="gn" style="text-align:right">+'+num(a.gan)+'</div></div></div>').join('')||'<div class="li muted">Sin datos</div>';
+  // ----- Clientes que se enfriaron (histórico, 4+ compras, fuera de ritmo) -----
+  const hoy=new Date(today());
+  const cli={};
+  D.ventas.forEach(v=>{if(sucF()&&v.sucursal!=sucF())return;const a=cli[v.cliente]=cli[v.cliente]||{fechas:[],fac:0,gan:0};a.fechas.push(v.fecha);a.fac+=+v.facturado;a.gan+=+v.ganancia;});
+  const caidos=[];
+  Object.entries(cli).forEach(([c,a])=>{
+    const fs=[...new Set(a.fechas)].sort();
+    if(fs.length<4)return;
+    const ult=new Date(fs[fs.length-1]),pri=new Date(fs[0]);
+    const dias=Math.round((hoy-ult)/86400000);
+    const frec=Math.round((ult-pri)/86400000/(fs.length-1));
+    if(!frec||frec<1)return;
+    if(dias>=frec*2 && dias>=8){caidos.push({c,dias,frec,fac:a.fac,ratio:dias/frec});}
+  });
+  caidos.sort((a,b)=>b.ratio-a.ratio);
+  $('sg-caidos').innerHTML=caidos.slice(0,15).map(x=>{
+    const rojo=x.ratio>4;
+    const col=rojo?'var(--red)':'var(--gold)';
+    return '<div class="li"><div class="nm">'+x.c+'<div class="muted">compraba cada '+x.frec+' días · '+ars(x.fac)+'</div></div><div class="badge" style="background:'+col+'22;color:'+col+'">hace '+x.dias+' días</div></div>';
+  }).join('')||'<div class="li muted">Ningún cliente enfriado 👍</div>';
+}
 function renderCargar(){
   const t=today(),vs=D.ventas.filter(v=>v.fecha==t);
   $('hoy').innerHTML=kpi('Ventas',vs.length,t.split('-').reverse().join('/'))+kpi('Facturado',ars(vs.reduce((a,v)=>a+ +v.facturado,0)))
@@ -385,13 +428,47 @@ function renderResumen(){
   const gas=mg().reduce((a,g)=>a+ +g.monto,0) + D.gasoil.filter(x=>ym(x.fecha)==mes()).reduce((a,x)=>a+ +x.monto,0);
   $('r-k').innerHTML=kpi('Ventas',num(vs.length))+kpi('Facturado',ars(fac))+kpi('Ganancia',ars(gan),fac?'margen '+(gan/fac*100).toFixed(1)+'%':'','g')+kpi('Ticket prom.',vs.length?ars(fac/vs.length):'$0','','b');
   $('r-p').innerHTML=kpi('Efectivo',ars(efe),fac?(efe/fac*100).toFixed(0)+'%':'','b')+kpi('Transferencia',ars(tra),fac?(tra/fac*100).toFixed(0)+'%':'','g');
-  $('r-r').innerHTML=kpi('Ganancia bruta',ars(gan),'','g')+kpi('Gastos',ars(gas),'','r')+kpi('Neta',ars(gan-gas),'','')+kpi('Garrafas+cil.',num(vs.reduce((a,v)=>a+v.u10+v.u15+v.u45,0)));
+  $('r-r').innerHTML=kpi('Ganancia bruta',ars(gan),'','g')+kpi('Gastos',ars(gas),'','r')+kpi('Neta',ars(gan-gas),'','');
   const s10=vs.reduce((a,v)=>a+v.u10,0),s15=vs.reduce((a,v)=>a+v.u15,0),s45=vs.reduce((a,v)=>a+v.u45,0);
   const sye=vs.reduce((a,v)=>a+(v.yerba||0),0),sag=vs.reduce((a,v)=>a+(v.agua||0),0);
   const senv=vs.filter(v=>+v.envase>0).length;
   $('r-v').innerHTML=kpi('Garrafas 10 kg',num(s10),num(s10*10)+' kg')+kpi('Garrafas 15 kg',num(s15),num(s15*15)+' kg')+kpi('Cilindros 45 kg',num(s45),num(s45*45)+' kg','b')
     +kpi('Envases nuevos',num(senv))+kpi('Yerba (paq.)',num(sye))+kpi('Agua (bidones)',num(sag),'','b');
+  renderEvol();
 }
+function renderEvol(){
+  const anios=[...new Set(D.ventas.map(v=>v.fecha.slice(0,4)))].sort().reverse();
+  if(!anios.length){$('ev-chart').innerHTML='<div class="muted" style="text-align:center;padding-top:80px">Sin datos</div>';return;}
+  const sel=$('ev-anio');
+  const prev=sel.value;
+  sel.innerHTML=anios.map(a=>'<option value="'+a+'">'+a+'</option>').join('');
+  sel.value=(prev&&anios.includes(prev))?prev:anios[0];
+  const anio=sel.value;
+  const nm=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const M=Array.from({length:12},()=>({fac:0,gan:0,u10:0,u15:0,u45:0}));
+  D.ventas.forEach(v=>{if(v.fecha.slice(0,4)!=anio)return;if(sucF()&&v.sucursal!=sucF())return;const mi=+v.fecha.slice(5,7)-1;M[mi].fac+=+v.facturado;M[mi].gan+=+v.ganancia;M[mi].u10+=v.u10;M[mi].u15+=v.u15;M[mi].u45+=v.u45;});
+  const max=Math.max(1,...M.map(m=>m.fac));
+  const W=100,H=100,pad=2,bw=(W-pad*2)/12,innerW=bw*0.72;
+  let bars='';
+  M.forEach((m,i)=>{
+    const x=pad+i*bw;
+    const hF=m.fac/max*(H-14);
+    const hG=m.gan/max*(H-14);
+    const wHalf=innerW/2;
+    bars+='<rect x="'+(x+bw*0.14).toFixed(2)+'" y="'+(H-12-hF).toFixed(2)+'" width="'+wHalf.toFixed(2)+'" height="'+hF.toFixed(2)+'" fill="var(--gold)" rx="0.6" style="cursor:pointer" onmouseover="evTip('+i+',1)" onmouseout="evTipClr()"/>';
+    bars+='<rect x="'+(x+bw*0.14+wHalf).toFixed(2)+'" y="'+(H-12-hG).toFixed(2)+'" width="'+wHalf.toFixed(2)+'" height="'+hG.toFixed(2)+'" fill="#4A4A52" rx="0.6" style="cursor:pointer" onmouseover="evTip('+i+',0)" onmouseout="evTipClr()"/>';
+    bars+='<text x="'+(x+bw/2).toFixed(2)+'" y="'+(H-4)+'" font-size="4" fill="var(--mut2)" text-anchor="middle">'+nm[i]+'</text>';
+  });
+  window.__evM=M;window.__evNm=nm;
+  $('ev-chart').innerHTML='<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">'+bars+'</svg>';
+  $('ev-tip').textContent='Tocá una barra para ver el detalle del mes';
+}
+function evTip(i,esFac){
+  const m=window.__evM[i],nm=window.__evNm[i];
+  if(esFac){$('ev-tip').innerHTML='<b style="color:var(--gold)">'+nm+'</b> · Facturado '+ars(m.fac)+' · Vendido: '+m.u10+'×10 '+m.u15+'×15 '+m.u45+'×45';}
+  else{const mg=m.fac?Math.round(m.gan/m.fac*100):0;$('ev-tip').innerHTML='<b style="color:#8a8a94">'+nm+'</b> · Ganancia '+ars(m.gan)+' · Margen '+mg+'%';}
+}
+function evTipClr(){$('ev-tip').textContent='Tocá una barra para ver el detalle del mes';}
 function ordC(el){document.querySelectorAll('#p-clientes .seg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');cur.ord=el.dataset.o;renderClientes();}
 function renderClientes(){
   const q=($('cs').value||'').toLowerCase();
