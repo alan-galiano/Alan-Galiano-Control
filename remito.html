@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Remitos · Alan Galiano Distribuciones</title>
+<style>
+:root{--bg:#0f0f0f;--panel:#1a1a1a;--panel2:#141414;--line:#2e2e2e;
+--gold:#c9a84c;--gold2:#7a6230;--green:#4caf50;--red:#ef5350;--cream:#f0ece0;--mut:#a09880;--mut2:#5a5448;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--cream);font-variant-numeric:tabular-nums;padding-bottom:40px}
+.hdr{background:linear-gradient(135deg,#111,#1a1500);border-bottom:2px solid var(--gold);padding:14px 16px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:20}
+.logo{width:38px;height:38px;border-radius:9px;background:var(--gold);color:#000;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center}
+.htxt b{font-size:15px;color:var(--gold)}.htxt div{font-size:9px;color:var(--gold2);text-transform:uppercase;letter-spacing:1.5px}
+.wrap{padding:14px;max-width:600px;margin:0 auto}
+label{display:block;font-size:11px;color:var(--mut);margin:14px 0 5px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--cream);padding:11px 12px;font-size:16px;font-family:inherit;font-variant-numeric:tabular-nums}
+textarea{min-height:60px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px}
+.lbl{font-size:10px;color:var(--mut2);text-transform:uppercase;letter-spacing:1.5px;margin:4px 0 8px;display:flex;align-items:center;gap:8px}
+.lbl::after{content:"";flex:1;height:1px;background:var(--line)}
+.btn{width:100%;background:var(--gold);color:#000;border:none;border-radius:9px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
+.btn:active{transform:translateY(1px)}
+.btn.sec{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.btn.add{background:#1a1500;color:var(--gold);border:1px solid var(--gold2)}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:4px}
+.seg button{flex:1;background:none;border:none;color:var(--mut);padding:12px 6px;font-size:13px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--gold);color:#000}
+.items{margin-top:12px}
+.it{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:14px}
+.it .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .qt{color:var(--mut);font-size:12px}
+.it .sub{color:var(--cream);font-weight:600;min-width:78px;text-align:right}
+.it .del{color:var(--red);background:none;border:none;font-size:18px;cursor:pointer;padding:0 2px}
+.tot{display:flex;justify-content:space-between;align-items:center;background:#1a1500;border:1px solid var(--gold2);border-radius:9px;padding:13px 16px;margin-top:14px}
+.tot b{color:var(--gold);font-size:13px;letter-spacing:1px}.tot span{color:var(--gold);font-size:22px;font-weight:800}
+.muted{color:var(--mut2);font-size:12px;text-align:center;margin-top:10px}
+.empty{color:var(--mut2);font-size:13px;text-align:center;padding:16px}
+.hide{display:none!important}
+.mixrow{display:none;gap:8px;margin-top:8px}
+</style></head>
+<body>
+
+<div class="hdr">
+  <div class="logo">AG</div>
+  <div class="htxt"><b>Alan Galiano Distribuciones</b><div id="htsub">Generador de comprobantes</div></div>
+</div>
+
+<div class="wrap">
+
+  <div class="lbl">Tipo de comprobante</div>
+  <div class="seg">
+    <button id="tv" class="on" onclick="setTipo('venta')">Remito de venta</button>
+    <button id="tc" onclick="setTipo('compra')">Detalle de compra</button>
+  </div>
+
+  <!-- ===== VENTA ===== -->
+  <div id="blkVenta">
+    <label>Cliente</label>
+    <input id="cli" placeholder="Nombre del cliente" autocomplete="off">
+    <label>Dirección <span style="color:var(--mut2);text-transform:none;letter-spacing:0">(opcional)</span></label>
+    <input id="dir" placeholder="Dejar vacío si no corresponde" autocomplete="off">
+  </div>
+
+  <!-- ===== COMPRA ===== -->
+  <div id="blkCompra" class="hide">
+    <label>Repartidor</label>
+    <input id="rep" placeholder="Ej: Guille" autocomplete="off">
+  </div>
+
+  <label>Fecha</label>
+  <input id="fecha" type="date">
+
+  <div class="card">
+    <div class="lbl">Agregar ítem</div>
+    <label>Producto</label>
+    <select id="prod">
+      <option value="Garrafa 10 kg">Garrafa 10 kg</option>
+      <option value="Garrafa 15 kg">Garrafa 15 kg</option>
+      <option value="Cilindro 45 kg">Cilindro 45 kg</option>
+      <option value="Bidón de agua">Bidón de agua</option>
+      <option value="Yerba">Yerba</option>
+      <option value="Regulador">Regulador</option>
+      <option value="Envase 10 kg">Envase 10 kg</option>
+      <option value="Envase 15 kg">Envase 15 kg</option>
+      <option value="Envase 45 kg">Envase 45 kg</option>
+      <option value="__otro__">Otro (escribir)</option>
+    </select>
+    <div id="otroWrap" class="hide">
+      <label>Nombre del producto</label>
+      <input id="otro" placeholder="Escribí el producto" autocomplete="off">
+    </div>
+    <div class="row">
+      <div><label>Cantidad</label><input id="cant" type="number" inputmode="numeric" value="1" min="1"></div>
+      <div><label>Precio unitario</label><input id="precio" type="number" inputmode="numeric" placeholder="$" min="0"></div>
+    </div>
+    <button class="btn add" onclick="agregar()">+ Agregar</button>
+  </div>
+
+  <div class="lbl" style="margin-top:18px">Ítems</div>
+  <div class="items" id="items"><div class="empty">Todavía no agregaste ítems</div></div>
+
+  <div class="tot"><b>TOTAL</b><span id="total">$0</span></div>
+
+  <!-- forma de pago solo en compra -->
+  <div id="blkPago" class="hide">
+    <label>Forma de pago</label>
+    <div class="seg">
+      <button id="pe" class="on" onclick="setPago('Efectivo')">Efectivo</button>
+      <button id="pt" onclick="setPago('Transferencia')">Transferencia</button>
+      <button id="pm" onclick="setPago('Mixto')">Mixto</button>
+    </div>
+    <div id="mixRow" class="mixrow">
+      <div><label>Efectivo $</label><input id="mixEf" type="number" inputmode="numeric" placeholder="$" min="0"></div>
+      <div><label>Transferencia $</label><input id="mixTr" type="number" inputmode="numeric" placeholder="$" min="0"></div>
+    </div>
+  </div>
+
+  <label>Observaciones <span style="color:var(--mut2);text-transform:none;letter-spacing:0">(opcional)</span></label>
+  <textarea id="obs" placeholder="Notas o aclaraciones..."></textarea>
+
+  <button class="btn" onclick="generarPDF()">📄 Descargar PDF</button>
+  <button class="btn sec" onclick="limpiar()">Limpiar todo</button>
+
+  <div class="muted">El PDF se descarga y lo podés compartir por WhatsApp</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+var LINEAS=[];
+var TIPO="venta";
+var PAGO="Efectivo";
+function fmt(n){return "$"+Math.round(n).toLocaleString("es-AR")}
+(function(){var d=new Date();document.getElementById("fecha").value=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
+
+function setTipo(t){
+  TIPO=t;
+  document.getElementById("tv").classList.toggle("on",t==="venta");
+  document.getElementById("tc").classList.toggle("on",t==="compra");
+  document.getElementById("blkVenta").classList.toggle("hide",t!=="venta");
+  document.getElementById("blkCompra").classList.toggle("hide",t!=="compra");
+  document.getElementById("blkPago").classList.toggle("hide",t!=="compra");
+  document.getElementById("htsub").textContent = t==="venta"?"Remito de venta":"Detalle de compra";
+}
+function setPago(p){
+  PAGO=p;
+  document.getElementById("pe").classList.toggle("on",p==="Efectivo");
+  document.getElementById("pt").classList.toggle("on",p==="Transferencia");
+  document.getElementById("pm").classList.toggle("on",p==="Mixto");
+  document.getElementById("mixRow").style.display = p==="Mixto"?"flex":"none";
+}
+document.getElementById("prod").addEventListener("change",function(){
+  document.getElementById("otroWrap").classList.toggle("hide",this.value!=="__otro__");
+});
+function agregar(){
+  var prodSel=document.getElementById("prod").value;
+  var nombre = prodSel==="__otro__" ? (document.getElementById("otro").value||"").trim() : prodSel;
+  var cant=parseInt(document.getElementById("cant").value)||0;
+  var precio=parseFloat(document.getElementById("precio").value)||0;
+  if(!nombre){alert("Escribí el nombre del producto");return}
+  if(cant<1){alert("La cantidad tiene que ser al menos 1");return}
+  if(precio<=0){alert("Poné el precio unitario");return}
+  LINEAS.push({nombre:nombre,cant:cant,precio:precio,sub:cant*precio});
+  document.getElementById("cant").value=1;
+  document.getElementById("precio").value="";
+  document.getElementById("otro").value="";
+  document.getElementById("prod").value="Garrafa 10 kg";
+  document.getElementById("otroWrap").classList.add("hide");
+  render();
+}
+function borrar(i){LINEAS.splice(i,1);render()}
+function render(){
+  var c=document.getElementById("items");
+  if(LINEAS.length===0){c.innerHTML='<div class="empty">Todavía no agregaste ítems</div>';}
+  else{
+    c.innerHTML=LINEAS.map(function(l,i){
+      return '<div class="it"><div class="nm">'+l.nombre+' <span class="qt">× '+l.cant+'</span></div><div class="sub">'+fmt(l.sub)+'</div><button class="del" onclick="borrar('+i+')">×</button></div>';
+    }).join("");
+  }
+  document.getElementById("total").textContent=fmt(LINEAS.reduce(function(a,l){return a+l.sub},0));
+}
+function limpiar(){
+  if(LINEAS.length && !confirm("¿Borrar todo?"))return;
+  LINEAS=[];
+  ["cli","dir","rep","obs","mixEf","mixTr"].forEach(function(id){document.getElementById(id).value=""});
+  render();
+}
+function fechaLinda(iso){if(!iso)return "";var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+
+function generarPDF(){
+  var fecha=fechaLinda(document.getElementById("fecha").value);
+  if(LINEAS.length===0){alert("Agregá al menos un ítem");return}
+  var tot=LINEAS.reduce(function(a,l){return a+l.sub},0);
+  var obs=(document.getElementById("obs").value||"").trim();
+
+  var titulo, quienLabel, quienVal, dir="";
+  if(TIPO==="venta"){
+    quienVal=(document.getElementById("cli").value||"").trim();
+    if(!quienVal){alert("Poné el nombre del cliente");return}
+    dir=(document.getElementById("dir").value||"").trim();
+    titulo="REMITO DE ENTREGA"; quienLabel="CLIENTE";
+  } else {
+    quienVal=(document.getElementById("rep").value||"").trim();
+    titulo="DETALLE DE COMPRA"; quienLabel="REPARTIDOR";
+  }
+
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF({unit:"mm",format:"a4"});
+  var W=210, M=18;
+  var gold=[201,168,76], mut=[176,160,128];
+
+  doc.setFillColor(250,248,243);doc.rect(0,0,W,297,"F");
+
+  // encabezado
+  doc.setFillColor(15,15,15);doc.roundedRect(M,18,14,14,3,3,"F");
+  doc.setTextColor(gold[0],gold[1],gold[2]);doc.setFont("helvetica","bold");doc.setFontSize(13);
+  doc.text("AG",M+7,27,{align:"center"});
+  doc.setTextColor(15,15,15);doc.setFontSize(16);
+  doc.text("Alan Galiano Distribuciones",M+20,25);
+  doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFont("helvetica","normal");doc.setFontSize(8);
+  doc.text(titulo,M+20,30);
+  doc.setDrawColor(gold[0],gold[1],gold[2]);doc.setLineWidth(0.8);doc.line(M,37,W-M,37);
+
+  // datos
+  var y=48;
+  doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFontSize(8);
+  doc.text(quienLabel,M,y);
+  doc.text("FECHA",W-M,y,{align:"right"});
+  doc.setTextColor(15,15,15);doc.setFont("helvetica","bold");doc.setFontSize(13);
+  doc.text(quienVal||"-",M,y+7);
+  doc.setFont("helvetica","normal");doc.setFontSize(12);
+  doc.text(fecha,W-M,y+7,{align:"right"});
+  var yy=y+7;
+  if(dir){doc.setTextColor(120,105,80);doc.setFontSize(10);doc.text(dir,M,y+13);yy=y+13;}
+
+  // tabla
+  var ty=yy+12;
+  doc.setDrawColor(224,212,184);doc.setLineWidth(0.3);doc.line(M,ty,W-M,ty);
+  doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFont("helvetica","normal");doc.setFontSize(8);
+  doc.text("DETALLE",M,ty+6);
+  doc.text("CANT",W-M-58,ty+6,{align:"right"});
+  doc.text("P. UNIT",W-M-30,ty+6,{align:"right"});
+  doc.text("SUBTOTAL",W-M,ty+6,{align:"right"});
+  var ry=ty+11;
+  doc.setFontSize(11);
+  LINEAS.forEach(function(l){
+    doc.setDrawColor(240,235,218);doc.line(M,ry-4,W-M,ry-4);
+    doc.setTextColor(30,30,30);doc.setFont("helvetica","normal");
+    doc.text(l.nombre,M,ry);
+    doc.setTextColor(90,90,90);
+    doc.text(String(l.cant),W-M-58,ry,{align:"right"});
+    doc.text(fmt(l.precio),W-M-30,ry,{align:"right"});
+    doc.setTextColor(15,15,15);doc.setFont("helvetica","bold");
+    doc.text(fmt(l.sub),W-M,ry,{align:"right"});
+    ry+=9;
+  });
+
+  // total
+  ry+=4;
+  doc.setFillColor(15,15,15);doc.roundedRect(M,ry,W-2*M,14,3,3,"F");
+  doc.setTextColor(gold[0],gold[1],gold[2]);doc.setFont("helvetica","bold");doc.setFontSize(11);
+  doc.text("TOTAL",M+6,ry+9);
+  doc.setFontSize(15);
+  doc.text(fmt(tot),W-M-6,ry+9,{align:"right"});
+  ry+=14;
+
+  // forma de pago (compra)
+  if(TIPO==="compra"){
+    ry+=9;
+    doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFont("helvetica","normal");doc.setFontSize(8);
+    doc.text("FORMA DE PAGO",M,ry);
+    doc.setTextColor(15,15,15);doc.setFont("helvetica","bold");doc.setFontSize(12);
+    var pagoTxt=PAGO;
+    if(PAGO==="Mixto"){
+      var ef=parseFloat(document.getElementById("mixEf").value)||0;
+      var tr=parseFloat(document.getElementById("mixTr").value)||0;
+      pagoTxt="Mixto — Efectivo "+fmt(ef)+" / Transf. "+fmt(tr);
+    }
+    doc.text(pagoTxt,M,ry+6);
+    ry+=6;
+  }
+
+  // observaciones
+  if(obs){
+    ry+=12;
+    doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFont("helvetica","normal");doc.setFontSize(8);
+    doc.text("OBSERVACIONES",M,ry);
+    doc.setTextColor(60,60,60);doc.setFontSize(10);
+    var wrapped=doc.splitTextToSize(obs,W-2*M);
+    doc.text(wrapped,M,ry+6);
+    ry+=6+wrapped.length*5;
+  }
+
+  // pie
+  doc.setTextColor(mut[0],mut[1],mut[2]);doc.setFont("helvetica","normal");doc.setFontSize(9);
+  doc.text("Alan Galiano Distribuciones",W/2,ry+16,{align:"center"});
+
+  var pref = TIPO==="venta"?"Remito":"Compra";
+  var nombreArch=pref+"_"+(quienVal||"s_n").replace(/[^a-zA-Z0-9]/g,"_")+"_"+(document.getElementById("fecha").value||"")+".pdf";
+  doc.save(nombreArch);
+}
+render();
+</script>
+</body></html>
